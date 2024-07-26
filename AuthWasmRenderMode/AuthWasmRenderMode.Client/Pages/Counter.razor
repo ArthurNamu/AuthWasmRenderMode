@@ -1,0 +1,37 @@
+﻿@page "/counter"
+@using AuthWasmRenderMode.Client.Services
+@inject IHttpService _httpClient
+<PageTitle>Counter</PageTitle>
+
+<h1>Counter</h1>
+
+<p role="status">Current user: @CurrentUser</p>
+
+<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+
+@code {
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+
+    private int currentCount = 0;
+    private string CurrentUser = "";
+
+    private async Task IncrementCount()
+    {
+        var user = await authenticationState;
+        CurrentUser = user.User.Identity.Name;
+        currentCount++;
+        var result = await _httpClient.PostRequest("",  "myname" );
+
+    }
+
+ 
+    protected override async Task OnInitializedAsync()
+    {
+            var user = await authenticationState;
+            CurrentUser = user.User.Identity.Name;
+            StateHasChanged();
+        
+    }
+}

@@ -1,0 +1,73 @@
+﻿@page "/account/login"
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authentication
+@using Blazored.LocalStorage
+
+@inject NavigationManager navMgr
+@inject ILocalStorageService localStorage
+
+<h3>Login</h3>
+
+This will be the page to login.
+<br />
+
+<h3>Login</h3>
+<EditForm Context="LoginForm" Model="@MyFormModel" OnSubmit="@Submit" FormName="MyLoginForm">
+    <InputText @bind-Value="MyFormModel!.Name" placeholder="Username" />
+    <button type="submit" class="btn btn-primary">Login</button>
+</EditForm>
+
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    public Credential? MyFormModel { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        MyFormModel ??= new();
+        // if(!string.IsNullOrEmpty(MyFormModel.Name))
+        //     await localStorage.SetItemAsync("token", MyFormModel.Name);
+        Console.WriteLine("Login page initialized");
+    }
+
+    private async Task Submit()
+    {
+        Console.WriteLine("Form Submitted");
+
+        if (MyFormModel is not null)
+        {
+            Console.WriteLine($"User Name: {MyFormModel.Name}");
+            // Create security context
+            var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, MyFormModel.Name!),
+                    new Claim("token", "72987928347293472304723")
+                };
+
+            var identity = new ClaimsIdentity(claims, "TdtsCookie");
+            var claimsPrincipal = new ClaimsPrincipal(identity);
+
+            HttpContext.SignInAsync("TdtsCookie", claimsPrincipal);
+
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            if (string.IsNullOrEmpty(MyFormModel.Name) is false)
+            await localStorage.SetItemAsync("token", MyFormModel.Name);
+        }
+    }
+
+    public class Credential
+    {
+        public string? Name { get; set; }
+    }
+}
